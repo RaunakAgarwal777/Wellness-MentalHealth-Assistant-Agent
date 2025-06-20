@@ -12,7 +12,7 @@ client = AzureOpenAI(
 DEPLOYMENT_NAME = "mindcraft-gpt4o"
 
 # Title
-st.title("🧠 Mental Health Check-In Agent")
+st.title("Mental Health Check-Up Assistant")
 
 # Initialize conversation history
 if 'conversation_history' not in st.session_state:
