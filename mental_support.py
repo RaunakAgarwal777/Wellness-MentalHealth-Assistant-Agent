@@ -1,45 +1,38 @@
 import streamlit as st
-from openai import AzureOpenAI
+import openai
 
-# ---- Azure OpenAI Configuration ----
-client = AzureOpenAI(
-    api_key="8WxLaoodYxa7XSK2rCiWuP3nqwWUShSUVd5FrjEYSqqROfIwc0qzJQQJ99BFAC77bzfXJ3w3AAABACOGweq",
-    api_version="2024-12-01-preview",
-    azure_endpoint="https://mindcraft-kapidhwaj-openai-api-key.openai.azure.com/"
-)
+# ✅ Public testing key (rate-limited)
+openai.api_key = "sk-PUBLIC-DEMO-ONLY-DONT-USE-FOR-HACKATHON"
 
-DEPLOYMENT_NAME = "mindcraft-gpt4o"  # Case-sensitive Azure deployment name
-
-# ---- Streamlit UI ----
-st.set_page_config(page_title="Mental Health Assistant", page_icon="🧠")
+st.set_page_config(page_title="Mental Health Agent", page_icon="🧠")
 st.title("🧠 Mental Health Check-In Agent")
 st.caption("Your friendly AI companion for emotional support.")
 
-# Initialize chat history
-if 'conversation_history' not in st.session_state:
-    st.session_state.conversation_history = []
+# Session state to remember conversation
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = [
+        {"role": "system", "content": "You are a friendly mental health assistant who speaks gently and supportively."}
+    ]
 
-# Show past messages
-for msg in st.session_state.conversation_history:
+# Display past messages
+for msg in st.session_state.chat_history[1:]:
     role = "You" if msg["role"] == "user" else "AI"
     st.markdown(f"**{role}:** {msg['content']}")
 
-# Input box
-user_input = st.text_input("How are you feeling today?", key="input")
+# User input
+user_input = st.text_input("How are you feeling today?")
 
-# Chat function using AzureOpenAI v1 client
-def generate_response(user_msg):
-    st.session_state.conversation_history.append({"role": "user", "content": user_msg})
-    response = client.chat.completions.create(
-        model=DEPLOYMENT_NAME,
-        messages=st.session_state.conversation_history
-    )
-    reply = response.choices[0].message.content
-    st.session_state.conversation_history.append({"role": "assistant", "content": reply})
-    return reply
-
-# Generate response
 if user_input:
-    with st.spinner("Checking in with you..."):
-        reply = generate_response(user_input)
-        st.markdown(f"**AI:** {reply}")
+    st.session_state.chat_history.append({"role": "user", "content": user_input})
+    with st.spinner("Thinking..."):
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=st.session_state.chat_history
+            )
+            reply = response.choices[0].message.content
+            st.session_state.chat_history.append({"role": "assistant", "content": reply})
+            st.markdown(f"**AI:** {reply}")
+        except Exception as e:
+            st.error("⚠️ Something went wrong: " + str(e))
+
